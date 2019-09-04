@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+ <canvas id="myCanvas" width="1000" height="600" style="border:1px solid #000000;">
+</canvas> 
+<script>
+
+
+var c = document.getElementById("myCanvas");
+var ctx = c.getContext("2d");
+
+var  nodes = [[800, 550]];
+var matrix = [[0]];
+
+var sun = [100, 100];
+
+var sigmaAngle = 0.5;
+var muLength = 70;
+var sigmaLength = 0.5;
+var bornPenalty = 0.0
+
+function countChildren(node)
+{
+    var count = 0;
+    var raw = matrix[node];
+    for (var k = 0; k < raw.length; k++)
+    {
+        count = count + raw[k];
+    }
+    return count;
+}
+
+function getAngle(node)
+{    
+    var difX = sun[0] - nodes[node][0];
+    var difY = sun[1] - nodes[node][1];
+    
+    return Math.atan(difY/difX);
+}
+
+function randNormal(mu, sigma)
+{
+    var u = 0;
+    var v = 0;
+    while (u === 0)
+    {
+        u = Math.random()
+    }
+    while (v === 0)
+    {
+        v = Math.random()
+    }
+    
+    var res = Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
+    return res * sigma + mu
+}
+
+
+ctx.fillStyle = 'rgb(' + 255 + ',' + 255 + ',' + 0 + ')';
+ctx.beginPath()
+ctx.arc(sun[0], sun[1], 10, 0, 2* Math.PI)
+ctx.fill()
+
+ctx.fillStyle = 'rgb(' + 0 + ',' + 255 + ',' + 0 + ')';
+ctx.beginPath()
+ctx.arc(nodes[0][0], nodes[0][1], 10, 0, 2* Math.PI)
+ctx.fill()
+var nodesCopy = nodes.slice();
+var matrixCopy = matrix.slice();
+
+var steps = 0;
+
+function myLoop()
+{
+
+    if (steps>10) return;
+    steps++;
+    
+    for (var i=0; i<nodes.length; i++)
+    {
+        children = countChildren(i);
+        if (Math.random() > ((1.0)/children) - bornPenalty)
+        {
+            continue;
+        }
+        var angle = getAngle(i);
+        angle = randNormal(angle, sigmaAngle);
+        
+        console.log(angle)
+        
+        var len = randNormal(muLength, sigmaLength)
+        
+        newNode = [nodes[i][0] - len*Math.cos(angle), nodes[i][1] - len*Math.sin(angle)];
+        nodesCopy.push(newNode);
+        
+        matrixCopy.push([])
+        
+        for (var y=0; y<nodesCopy.length; y++)
+        {
+            matrixCopy[nodes.length-1].push(0)
+            matrixCopy[y].push(0)
+        }
+        
+        matrixCopy[i][nodes.length-1] = 1
+        
+        ctx.beginPath();
+        ctx.arc(newNode[0], newNode[1], 5, 0, 2* Math.PI)
+        ctx.fill()
+        ctx.beginPath()
+        ctx.moveTo(nodes[i][0], nodes[i][1])
+        ctx.lineTo(newNode[0], newNode[1])
+        ctx.stroke();
+    }
+    nodes = nodesCopy.slice()
+    matrix = matrixCopy.slice()
+    setTimeout(myLoop, 3000)
+}
+
+setTimeout(myLoop, 3000)
+
+
+</script>
